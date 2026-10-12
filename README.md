@@ -48,10 +48,16 @@ iOS 12.1+. Eight dynamic XCFrameworks (`ffmpegkit` plus the FFmpeg libraries it 
 .product(name: "ffmpegkit-vp9", package: "ffmpegkit-vp9"),
 ```
 
-**CocoaPods** (the podspec is in this repo, not on trunk):
+**CocoaPods:**
 
 ```ruby
-pod 'ffmpegkit-vp9', :podspec => 'https://raw.githubusercontent.com/MediaCacheDev/ffmpegkit-vp9/6.0.0/ffmpegkit-vp9.podspec'
+pod 'ffmpegkit-vp9', '6.0.0'
+```
+
+CocoaPods trunk is read-only from 2 December 2026, so 6.0.0 is the last version on it. Later versions are used through the podspec at their tag:
+
+```ruby
+pod 'ffmpegkit-vp9', :podspec => 'https://raw.githubusercontent.com/MediaCacheDev/ffmpegkit-vp9/<version>/ffmpegkit-vp9.podspec'
 ```
 
 **Manually:** download `ffmpegkit-vp9-6.0.0-ios-xcframeworks.zip` from the [release](https://github.com/MediaCacheDev/ffmpegkit-vp9/releases/tag/6.0.0) and add the frameworks with "Embed & Sign".
