@@ -1,0 +1,120 @@
+// Publishes the prebuilt dist/android/ffmpegkit-vp9.aar (from scripts/build-android.sh) as
+// dev.mediacache:ffmpegkit-vp9. Run it through scripts/publish-android.sh.
+//
+// Signing reads the same Gradle properties as Vanniktech's plugin, usually set as
+// ORG_GRADLE_PROJECT_signingInMemoryKey (armored secret key), …KeyPassword and optionally …KeyId.
+// Without a key the artifacts are left unsigned, which is enough for publishToMavenLocal.
+
+plugins {
+    id 'base'
+    id 'maven-publish'
+    id 'signing'
+}
+
+group = 'dev.mediacache'
+version = findProperty('ffmpegkitVp9Version') ?: '6.0.0'
+
+def repoUrl = 'https://github.com/MediaCacheDev/ffmpegkit-vp9'
+def aar = file('../dist/android/ffmpegkit-vp9.aar')
+
+// Maven Central requires a sources jar. The "source" of this artifact is the build: the
+// scripts that fetch the pinned ffmpeg-kit, FFmpeg and libvpx and configure them. The full
+// source trees are on the GitHub Release.
+def sourcesJar = tasks.register('sourcesJar', Jar) {
+    archiveClassifier = 'sources'
+    from('..') {
+        include 'scripts/**', 'licenses/**', 'LICENSE', 'THIRD_PARTY_NOTICES.md', 'README.md'
+    }
+}
+
+def javadocJar = tasks.register('javadocJar', Jar) {
+    archiveClassifier = 'javadoc'
+    from 'javadoc'
+}
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            artifactId = 'ffmpegkit-vp9'
+            artifact(aar) {
+                extension = 'aar'
+            }
+            artifact sourcesJar
+            artifact javadocJar
+
+            pom {
+                packaging = 'aar'
+                name = 'ffmpegkit-vp9'
+                description = 'FFmpegKit 6.0 for Android, built with only what it takes to decode VP9 WebM with alpha through libvpx to raw frames. Same com.arthenica.ffmpegkit API.'
+                url = repoUrl
+                inceptionYear = '2026'
+                licenses {
+                    license {
+                        name = 'GNU Lesser General Public License v3.0 or later'
+                        url = 'https://www.gnu.org/licenses/lgpl-3.0.txt'
+                        distribution = 'repo'
+                    }
+                    license {
+                        name = 'BSD-3-Clause (libvpx)'
+                        url = 'https://chromium.googlesource.com/webm/libvpx/+/refs/tags/v1.13.0/LICENSE'
+                        distribution = 'repo'
+                    }
+                    license {
+                        name = 'Apache-2.0 (cpu_features)'
+                        url = 'https://www.apache.org/licenses/LICENSE-2.0.txt'
+                        distribution = 'repo'
+                    }
+                }
+                developers {
+                    developer {
+                        id = 'danielkpl2'
+                        name = 'Daniel Kasprowicz'
+                        email = '9932671+danielkpl2@users.noreply.github.com'
+                        url = 'https://github.com/danielkpl2'
+                    }
+                }
+                scm {
+                    connection = "scm:git:${repoUrl}.git"
+                    developerConnection = "scm:git:${repoUrl}.git"
+                    url = repoUrl
+                }
+                // FFmpegKit's Java layer needs this at runtime; it isn't inside the AAR.
+                withXml {
+                    def dependency = asNode().appendNode('dependencies').appendNode('dependency')
+                    dependency.appendNode('groupId', 'com.arthenica')
+                    dependency.appendNode('artifactId', 'smart-exception-java')
+                    dependency.appendNode('version', '0.2.1')
+                    dependency.appendNode('scope', 'runtime')
+                }
+            }
+        }
+    }
+    repositories {
+        maven {
+            name = 'staging'
+            url = layout.buildDirectory.dir('staging-repo')
+        }
+    }
+}
+
+def signingKey = findProperty('signingInMemoryKey')
+if (signingKey) {
+    signing {
+        def keyId = findProperty('signingInMemoryKeyId')
+        def password = findProperty('signingInMemoryKeyPassword')
+        if (keyId) {
+            useInMemoryPgpKeys(keyId, signingKey, password)
+        } else {
+            useInMemoryPgpKeys(signingKey, password)
+        }
+        sign publishing.publications.maven
+    }
+}
+
+tasks.withType(AbstractPublishToMaven).configureEach {
+    doFirst {
+        if (!aar.exists()) {
+            throw new GradleException("Missing ${aar}; run scripts/build-android.sh first")
+        }
+    }
+}

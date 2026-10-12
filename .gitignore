@@ -1,0 +1,8 @@
+.DS_Store
+
+# ffmpeg-kit checkouts and build trees, and the built binaries
+build/
+dist/
+
+maven/.gradle/
+maven/build/
