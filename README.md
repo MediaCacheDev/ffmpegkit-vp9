@@ -38,7 +38,29 @@ Always pass `-c:v libvpx-vp9` (only the libvpx decoder is built) and `-an` (ther
 
 ### iOS
 
-Download `ffmpegkit-vp9-6.0.0-ios-xcframeworks.zip` from the [release](https://github.com/MediaCacheDev/ffmpegkit-vp9/releases/tag/6.0.0) and embed the eight XCFrameworks. They are dynamic frameworks; with CocoaPods, list them in `vendored_frameworks` and they are embedded for you.
+iOS 12.1+. Eight dynamic XCFrameworks (`ffmpegkit` plus the FFmpeg libraries it links); whichever way you add them, they are embedded in the app.
+
+**Swift Package Manager:** in Xcode, File → Add Package Dependencies → `https://github.com/MediaCacheDev/ffmpegkit-vp9`, or in `Package.swift`:
+
+```swift
+.package(url: "https://github.com/MediaCacheDev/ffmpegkit-vp9", exact: "6.0.0"),
+// target dependency:
+.product(name: "ffmpegkit-vp9", package: "ffmpegkit-vp9"),
+```
+
+**CocoaPods** (the podspec is in this repo, not on trunk):
+
+```ruby
+pod 'ffmpegkit-vp9', :podspec => 'https://raw.githubusercontent.com/MediaCacheDev/ffmpegkit-vp9/6.0.0/ffmpegkit-vp9.podspec'
+```
+
+**Manually:** download `ffmpegkit-vp9-6.0.0-ios-xcframeworks.zip` from the [release](https://github.com/MediaCacheDev/ffmpegkit-vp9/releases/tag/6.0.0) and add the frameworks with "Embed & Sign".
+
+```swift
+import ffmpegkit
+
+let session = FFmpegKit.execute("-c:v libvpx-vp9 -i input.webm -an -pix_fmt yuva420p -f rawvideo frames.yuv")
+```
 
 ## Building
 
@@ -54,12 +76,13 @@ Download `ffmpegkit-vp9-6.0.0-ios-xcframeworks.zip` from the [release](https://g
 ### Releasing
 
 ```bash
-./scripts/package-release.sh          # → dist/release/: binaries, source tarballs, SHA256SUMS
+./scripts/package-release.sh          # → dist/release/: binaries, source tarballs, SHA256SUMS;
+                                      #   also regenerates Package.swift and the podspec
 ./scripts/publish-android.sh local    # → ~/.m2
 ./scripts/publish-android.sh central  # → Central Portal deployment (needs credentials, see the script)
 ```
 
-The binaries name this version's release page as the place to get their source, so create the GitHub Release (with everything in `dist/release/`) before publishing the Maven Central deployment.
+Commit `Package.swift` and `ffmpegkit-vp9.podspec`, tag the version, and create the GitHub Release with everything in `dist/release/`; SPM and CocoaPods read the tag and download from the release. The binaries name the release page as the place to get their source, so do this before publishing the Maven Central deployment.
 
 ## Licence
 

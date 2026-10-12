@@ -5,6 +5,7 @@
 #
 #   ffmpegkit-vp9-<version>.aar                  the Android AAR (same file as on Maven Central)
 #   ffmpegkit-vp9-<version>-ios-xcframeworks.zip  the iOS XCFrameworks (Frameworks/*.xcframework)
+#   ffmpegkit-vp9-<version>-<name>.xcframework.zip one per framework, for SPM (package-apple.sh)
 #   ffmpeg-kit-<commit>.tar.gz                    ffmpeg-kit at the pinned commit
 #   ffmpeg-n6.0.tar.gz                            FFmpeg as ffmpeg-kit fetched it (arthenica/FFmpeg)
 #   libvpx-v1.13.0.tar.gz                         libvpx as ffmpeg-kit fetched it (arthenica/libvpx)
@@ -14,7 +15,8 @@
 #
 # The source tarballs are the complete corresponding source (LGPL-3.0 section 4): ffmpeg-kit's
 # scripts patch FFmpeg at build time, so the pristine trees plus ffmpeg-kit plus these scripts
-# reproduce the binaries. Run after build-android.sh and build-ios.sh.
+# reproduce the binaries. Run after build-android.sh and build-ios.sh. It also regenerates
+# Package.swift and ffmpegkit-vp9.podspec, which must be committed before tagging.
 #
 
 set -euo pipefail
@@ -61,6 +63,8 @@ echo "  ✔ ffmpegkit-vp9-$FFMPEGKIT_VP9_VERSION.aar"
 
 (cd "$DIST_DIR/ios" && zip -qry "$OUT/ffmpegkit-vp9-$FFMPEGKIT_VP9_VERSION-ios-xcframeworks.zip" Frameworks)
 echo "  ✔ ffmpegkit-vp9-$FFMPEGKIT_VP9_VERSION-ios-xcframeworks.zip"
+
+"$ROOT_DIR/scripts/package-apple.sh"
 
 (cd "$OUT" && shasum -a 256 *.tar.gz *.aar *.zip > SHA256SUMS)
 echo ""
